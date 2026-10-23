@@ -1,0 +1,22 @@
+# secrets: never commit
+.env
+.env.*
+!.env.example
+
+# dependencies and builds
+node_modules/
+dist/
+coverage/
+
+# local data (database + UHI signing keys are generated on first run)
+data/
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# UI check screenshots
+screenshots/

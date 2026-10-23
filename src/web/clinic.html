@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f7f8" />
+    <link rel="icon" href="/favicon.ico" type="image/svg+xml" />
+    <title>Clinic desk · DocSaathi</title>
+    <link rel="stylesheet" href="./clinic.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div>
+        <h1>Clinic desk</h1>
+        <p class="sub">What a clinic's receptionist sees when a family books on Alexa. Accept a booking, or say why you can't take it: the family hears it on Alexa at once.</p>
+      </div>
+      <span class="test">Test network</span>
+    </header>
+    <main>
+      <p class="empty" id="empty" hidden>No bookings yet. Book a doctor on Alexa and it appears here within a few seconds.</p>
+      <ul class="list" id="list"></ul>
+    </main>
+    <footer class="foot">Every clinic and doctor here is an example on DocSaathi's test UHI network. The desk's answer travels to the family's app as a signed UHI <code>on_status</code> message.</footer>
+    <script type="module" src="./clinic.ts"></script>
+  </body>
+</html>

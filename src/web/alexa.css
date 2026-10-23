@@ -1,0 +1,268 @@
+/* Echo Show simulator for DocSaathi. Single dark look (a device on a desk at night). */
+:root {
+  --bg: #081014;
+  --bg-2: #0d1a20;
+  --panel: #10212a;
+  --line: #22404b;
+  --fg: #eaf4f6;
+  --muted: #93aeb7;
+  --accent: #3fc6bd;
+  --accent-ink: #052320;
+  --you: #1b3440;
+  --alexa: #0f3533;
+  --danger: #ff6b6b;
+  --device: #030607;
+  --font: "Segoe UI", system-ui, -apple-system, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; min-height: 100%; }
+body { background: radial-gradient(1200px 600px at 30% 0%, var(--bg-2), var(--bg)); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.45; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topbar { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: 16px calc(clamp(16px, 3vw, 36px) + 56px) 16px clamp(16px, 3vw, 36px); }
+
+/* The menu button (top right) and its side panel */
+.menu-btn { position: absolute; top: 16px; right: clamp(16px, 3vw, 36px); width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); display: grid; place-items: center; cursor: pointer; }
+.menu-btn:hover, .menu-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.menu-btn svg, .drawer h2 svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.menu-btn svg { width: 22px; height: 22px; }
+.drawer-scrim { position: fixed; inset: 0; z-index: 100; background: rgba(2, 8, 10, 0.6); backdrop-filter: blur(2px); opacity: 0; transition: opacity 0.2s; }
+.drawer-scrim.open { opacity: 1; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 101; width: min(380px, 88vw); display: flex; flex-direction: column; background: var(--bg-2); border-left: 1px solid var(--line); box-shadow: -24px 0 48px -24px rgba(0, 0, 0, 0.9); transform: translateX(100%); transition: transform 0.25s ease; }
+.drawer.open { transform: none; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.drawer-title { margin: 0; font-weight: 800; font-size: 18px; }
+.drawer-close { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-size: 24px; line-height: 1; cursor: pointer; }
+.drawer-close:hover { border-color: var(--accent); }
+.drawer-body { overflow-y: auto; padding: 4px 14px 28px; overscroll-behavior: contain; }
+.drawer section { padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.drawer section:last-child { border-bottom: 0; }
+.drawer h2 { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.drawer h2 svg { width: 18px; height: 18px; }
+.drawer .item { display: block; width: 100%; text-align: left; margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); font-weight: 650; cursor: pointer; }
+.drawer .item small { display: block; margin-top: 2px; font-size: 12px; font-weight: 400; color: var(--muted); }
+.drawer .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
+.drawer .chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: transparent; font-size: 14px; cursor: pointer; }
+.drawer .item:hover, .drawer .chip:hover { border-color: var(--accent); }
+.drawer .note { margin: 2px 2px 8px; font-size: 12px; color: var(--muted); }
+.drawer .sos h2 { color: var(--danger); }
+.drawer .sos .item { border-color: rgba(255, 107, 107, 0.45); }
+.drawer .numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.drawer .numbers a { padding: 8px 4px; border-radius: 12px; border: 1px solid rgba(255, 107, 107, 0.45); color: var(--fg); text-align: center; text-decoration: none; }
+.drawer .numbers b { display: block; font-size: 18px; color: var(--danger); }
+.drawer .numbers span { font-size: 11px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim { transition: none; } }
+.drawer-back { width: 40px; height: 40px; margin-right: 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-size: 26px; line-height: 1; cursor: pointer; }
+.drawer-back:hover { border-color: var(--accent); }
+.drawer-head .drawer-title { flex: 1; }
+
+/* The health record pages inside the menu */
+.drawer-page { overflow-y: auto; padding: 10px 14px 28px; overscroll-behavior: contain; }
+.drawer-page .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.rec-section h3 { margin: 14px 2px 8px; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.rec-card { position: relative; margin-bottom: 8px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); }
+.rec-card.done { opacity: 0.7; }
+.rec-card p { margin: 0; }
+.rec-date { font-size: 12px; color: var(--muted); }
+.rec-name { font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 70px; }
+.rec-how { margin-top: 2px !important; }
+.rec-meta { font-size: 13px; color: var(--muted); margin-top: 2px !important; }
+.rec-source { font-size: 11px; color: var(--muted); margin-top: 4px !important; letter-spacing: 0.02em; }
+.rec-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(63, 198, 189, 0.15); color: var(--accent); }
+.rec-badge.done { background: rgba(147, 174, 183, 0.15); color: var(--muted); }
+.rec-remove { position: absolute; top: 8px; right: 8px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; font-size: 12px; color: var(--muted); cursor: pointer; }
+.rec-remove:hover { border-color: var(--danger); color: var(--danger); }
+.rec-add { margin: 14px 0 10px; border: 1px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+.rec-add summary { cursor: pointer; font-weight: 700; color: var(--accent); padding: 4px 0; }
+.rec-field { display: block; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.rec-field span { display: block; margin-bottom: 4px; }
+.rec-field input, .rec-field select { width: 100%; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font: inherit; font-size: 15px; color-scheme: dark; }
+.rec-save, .rec-share { width: 100%; margin-top: 12px; padding: 10px 14px; border-radius: 999px; border: 0; font-weight: 700; cursor: pointer; }
+.rec-save { background: var(--accent); color: var(--accent-ink); }
+.rec-share { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+.rec-error { margin: 10px 0 0; padding: 8px 10px; border-radius: 10px; background: #3a1616; color: #ffb4ab; font-size: 13px; }
+.rec-safety { padding: 8px 10px; border-radius: 10px; background: rgba(63, 198, 189, 0.08); }
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo { width: 40px; height: 40px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font-weight: 900; font-size: 26px; }
+.brand-name { margin: 0; font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+.brand-sub { margin: 0; color: var(--muted); font-size: 13px; }
+.status { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill { font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; color: var(--muted); white-space: nowrap; }
+.pill b { color: var(--fg); font-weight: 700; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); gap: clamp(16px, 2.5vw, 32px); padding: 0 clamp(16px, 3vw, 36px) 16px; align-items: start; }
+@media (max-width: 980px) { .stage { grid-template-columns: 1fr; } }
+
+/* The device */
+.device-wrap { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.device { position: relative; background: var(--device); border-radius: 28px; padding: 22px 22px 30px; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8), inset 0 1px 0 #1c2a30; }
+.camera { position: absolute; top: 9px; left: 50%; width: 7px; height: 7px; margin-left: -3px; border-radius: 50%; background: #1e2b31; }
+.screen { position: relative; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden; background: #0b1418; }
+.screen iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.screen-idle { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 24px; text-align: center; }
+.idle-time { margin: 0; font-size: clamp(40px, 7vw, 84px); font-weight: 200; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; text-shadow: 0 0 28px rgba(63, 198, 189, 0.35); }
+/* The DocSaathi pulse (fx.ts): behind the page, and the helix on the idle screen */
+.fx-bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+.fx-hero { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.screen-idle > :not(.fx-hero) { position: relative; z-index: 1; }
+.idle-hint { margin: 0; color: var(--muted); max-width: 36em; }
+.link-card { margin-top: 8px; border: 1px solid var(--line); background: var(--panel); border-radius: 16px; padding: 14px 18px; max-width: 30em; }
+.link-card p { margin: 0 0 10px; }
+.link-card button, button.pill.link-needed { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 999px; font-weight: 700; cursor: pointer; }
+.link-card button { font-size: 16px; padding: 10px 22px; }
+button.pill.link-needed { padding: 3px 12px; }
+.lightbar { position: absolute; left: 22px; right: 22px; bottom: 11px; height: 5px; border-radius: 99px; background: transparent; transition: background 0.3s; }
+.device[data-state="listening"] .lightbar { background: linear-gradient(90deg, transparent, var(--accent), transparent); background-size: 200% 100%; animation: sweep 1.2s linear infinite; }
+.device[data-state="thinking"] .lightbar { background: linear-gradient(90deg, var(--accent), #2a7f9e, var(--accent)); background-size: 200% 100%; animation: sweep 0.8s linear infinite; }
+.device[data-state="speaking"] .lightbar { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+@keyframes sweep { from { background-position: 200% 0; } to { background-position: 0 0; } }
+@keyframes pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .lightbar { animation: none !important; } }
+.caption { margin: 0; min-height: 3em; font-size: clamp(16px, 1.6vw, 20px); color: var(--fg); }
+.caption .who { color: var(--accent); font-weight: 700; }
+
+/* Conversation panel */
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.transcript { height: min(38vh, 360px); overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.hint { color: var(--muted); margin: auto 0; text-align: center; }
+.bubble { max-width: 88%; padding: 8px 12px; border-radius: 14px 14px 14px 4px; background: var(--alexa); }
+.bubble.you { align-self: flex-end; border-radius: 14px 14px 4px 14px; background: var(--you); }
+.bubble .who { display: block; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.bubble.error { background: #3a1616; }
+.bubble.interim { opacity: 0.6; font-style: italic; }
+
+.controls { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.mic { grid-row: span 2; width: 72px; height: 72px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); cursor: pointer; display: grid; place-items: center; box-shadow: 0 8px 20px -8px rgba(63, 198, 189, 0.7); }
+.mic svg { width: 32px; height: 32px; fill: currentColor; }
+.mic[aria-pressed="true"] { background: var(--danger); color: #fff; animation: pulse 1s ease-in-out infinite; }
+.mic:disabled { opacity: 0.4; cursor: not-allowed; }
+.ask { display: flex; gap: 6px; }
+.ask input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; color: var(--fg); padding: 9px 14px; font: inherit; }
+.send { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 0 14px; cursor: pointer; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.lang { display: flex; gap: 6px; }
+.lang button, .toggle { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 700; }
+/* Hands-free switch: a dot that lights up when on. */
+.toggle::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--line); margin-right: 6px; vertical-align: 1px; }
+.toggle[aria-pressed="true"] { color: var(--fg); border-color: var(--accent); }
+.toggle[aria-pressed="true"]::before { background: var(--accent); }
+/* The location pill is a button: tap it to use this device's location. */
+button.pill { background: transparent; cursor: pointer; font-family: inherit; }
+button.pill:hover { border-color: var(--accent); }
+/* "Speaking:" menu, shaped like the other pills. */
+label.pill { display: inline-flex; align-items: center; gap: 2px; cursor: pointer; }
+label.pill:hover, label.pill:focus-within { border-color: var(--accent); }
+.pill select { background: transparent; color: var(--fg); border: 0; font: inherit; font-weight: 700; padding: 0 2px; cursor: pointer; max-width: 11em; }
+.pill select:focus-visible { outline: none; }
+.pill option { background: var(--panel); color: var(--fg); }
+
+.dock { display: flex; flex-direction: column; gap: 14px; }
+.demo { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.demo-title { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.demo-lines { display: flex; flex-wrap: wrap; gap: 6px; }
+.demo-lines button { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 6px 10px; cursor: pointer; font-size: 13px; text-align: left; }
+.demo-lines button:hover { border-color: var(--accent); }
+.demo-lines button.reset { color: var(--muted); border-style: dashed; }
+.demo-lines button.talk { border-color: var(--accent); }
+/* The other side: the clinic's receptionist screen, opened in another tab or on another phone. */
+.desk-link { border: 1px dashed var(--accent); border-radius: 10px; padding: 6px 10px; font-size: 13px; color: var(--accent); text-decoration: none; white-space: nowrap; display: inline-flex; align-items: center; }
+.desk-link:hover { background: var(--bg-2); }
+.bubble.notice { border: 1px solid var(--accent); }
+
+.phone { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.phone-title { margin: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.phone-msgs { display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+.sms { background: #e9f0f2; color: #0d2026; border-radius: 12px 12px 12px 4px; padding: 8px 10px; font-size: 13px; }
+.sms time { display: block; font-size: 11px; color: #4d6670; margin-top: 2px; }
+
+.foot { color: var(--muted); font-size: 12px; padding: 8px clamp(16px, 3vw, 36px) 20px; max-width: 70em; }
+
+/* ---------- Responsive: every phone, tablet and orientation ---------- */
+
+/* iPhone notch / home bar: keep content inside the safe area. */
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+html, body { overflow-x: hidden; }
+
+/* Touch screens: every tappable thing at least ~44px tall. */
+@media (pointer: coarse) {
+  .demo-lines button, .lang button, .toggle, .send { min-height: 44px; }
+}
+
+/* Tablets and small laptops: one column, device full width. */
+@media (max-width: 980px) {
+  .device-wrap { max-width: 760px; width: 100%; margin: 0 auto; }
+  .panel { max-width: 760px; width: 100%; margin: 0 auto; }
+}
+
+/* Phones (portrait): app-style. The Echo screen stays on top; the mic, text box and demo lines
+   live in a dock fixed at the bottom (like a chat app), so you never scroll to talk. */
+@media (max-width: 640px) {
+  body { font-size: 14px; padding-bottom: calc(168px + env(safe-area-inset-bottom)); }
+  .topbar { padding: 10px 14px; gap: 8px; }
+  .logo { width: 34px; height: 34px; font-size: 22px; border-radius: 10px; }
+  .brand-name { font-size: 18px; }
+  .brand-sub { font-size: 12px; }
+  .status { gap: 4px; }
+  .pill { font-size: 11px; padding: 2px 8px; }
+  .stage { padding: 0 12px 12px; gap: 10px; }
+  .device { padding: 12px 12px 20px; border-radius: 22px; }
+  .camera { top: 4px; }
+  .lightbar { left: 12px; right: 12px; bottom: 7px; }
+  .screen { aspect-ratio: 4 / 5; }
+  .idle-hint { font-size: 13px; }
+  .caption { font-size: 15px; min-height: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .panel { padding: 12px; gap: 12px; border-radius: 16px; }
+  .transcript { height: auto; max-height: 45vh; min-height: 120px; }
+
+  .dock {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; gap: 8px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+    background: rgba(8, 16, 20, 0.97); border-top: 1px solid var(--line);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .demo { order: -1; border-top: 0; padding-top: 0; gap: 0; }
+  .demo-title { display: none; }
+  .demo-lines { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scroll-snap-type: x proximity; scrollbar-width: none; }
+  .demo-lines::-webkit-scrollbar { display: none; }
+  .demo-lines button { font-size: 12.5px; padding: 6px 10px; white-space: nowrap; flex: 0 0 auto; scroll-snap-align: start; }
+  .controls { gap: 6px 10px; }
+  .mic { width: 56px; height: 56px; }
+  .ask input { font-size: 16px; } /* 16px stops iPhones zooming in when typing */
+  .lang button, .toggle { padding: 2px 10px; font-size: 12px; min-height: 30px; }
+  .foot { padding: 8px 16px 16px; }
+}
+
+/* Small phones (iPhone SE, older Androids: 320–375px wide). */
+@media (max-width: 375px) {
+  .brand-sub { display: none; }
+  .stage { padding: 0 8px 8px; }
+  .device { padding: 10px 8px 18px; border-radius: 18px; }
+  .lightbar { left: 8px; right: 8px; }
+  .screen { aspect-ratio: 1 / 1; border-radius: 10px; }
+  .dock { padding-left: 8px; padding-right: 8px; }
+  .mic { width: 50px; height: 50px; }
+  .mic svg { width: 24px; height: 24px; }
+  .send { padding: 0 10px; }
+  .lang button, .toggle { padding: 2px 8px; }
+  .caption { font-size: 14px; }
+}
+
+/* Phones sideways (landscape): device and conversation side by side, screen fits the height. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .topbar { padding: 6px 16px; }
+  .brand-sub, .foot { display: none; }
+  .stage { grid-template-columns: minmax(0, 1.25fr) minmax(260px, 1fr); gap: 12px; padding: 0 12px 8px; }
+  .device-wrap, .panel { max-width: none; margin: 0; }
+  .device { padding: 8px 10px 14px; border-radius: 16px; }
+  .screen { aspect-ratio: auto; height: calc(100vh - 110px); height: calc(100dvh - 110px); }
+  .lightbar { bottom: 5px; }
+  .caption { display: none; }
+  .panel { padding: 10px; gap: 8px; max-height: calc(100dvh - 60px); overflow-y: auto; }
+  .transcript { height: 28vh; }
+  .mic { width: 52px; height: 52px; }
+}

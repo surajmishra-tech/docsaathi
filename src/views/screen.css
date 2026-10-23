@@ -1,0 +1,200 @@
+/* DocSaathi screen: designed for an Echo Show seen from across the room.
+   Big type, few words per card, one clear action. Dark by default, light supported. */
+:root {
+  --bg: #0b1418;
+  --surface: #132229;
+  --surface-2: #1b2f38;
+  --line: #27424d;
+  --fg: #eef6f8;
+  --muted: #9db5bd;
+  --accent: #3fc6bd;
+  --accent-ink: #062321;
+  --gold: #f1b94b;
+  --good: #58d68d;
+  --good-bg: #123526;
+  --danger: #ff5d5d;
+  --danger-bg: #3a1113;
+  --radius: 18px;
+  --font: "Segoe UI", system-ui, -apple-system, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #f3f7f8;
+  --surface: #ffffff;
+  --surface-2: #eaf2f3;
+  --line: #d2e0e3;
+  --fg: #0f2329;
+  --muted: #4d6670;
+  --accent: #0b7a73;
+  --accent-ink: #ffffff;
+  --gold: #8a5a00;
+  --good: #1c7c45;
+  --good-bg: #dff3e7;
+  --danger: #b3261e;
+  --danger-bg: #fde7e6;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--font); }
+body { font-size: clamp(15px, 2.1vw, 22px); line-height: 1.3; }
+button { font: inherit; }
+button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.screen { height: 100%; padding: 3.2vw 3.6vw; display: flex; flex-direction: column; gap: 2vw; overflow-y: auto; }
+
+.idle { margin: auto; text-align: center; }
+.idle-title { font-size: 2.6em; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
+.idle-sub { color: var(--muted); margin: 0.4em 0 0; }
+
+/* Header */
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5em 1em; flex-wrap: wrap; }
+.title { font-size: 1.55em; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+.sub { color: var(--muted); margin: 0.15em 0 0; font-size: 0.9em; }
+.chips { display: flex; gap: 0.4em; flex-wrap: wrap; }
+.chip { font-size: 0.7em; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 0.3em 0.75em; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.test { color: var(--gold); }
+.chip.uhi { color: var(--accent); }
+
+/* Doctor cards (carousel for browsing, per Amazon's pattern guidance) */
+.cards { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(13.2em, 1fr); gap: 1.2vw; overflow-x: auto; padding-bottom: 0.3em; scroll-snap-type: x mandatory; flex-shrink: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.85em 0.95em; display: flex; flex-direction: column; gap: 0.35em; scroll-snap-align: start; min-width: 0; }
+.card.pick { border-color: var(--accent); }
+.num { width: 1.7em; height: 1.7em; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 800; display: grid; place-items: center; font-size: 0.85em; }
+.card-top { display: flex; align-items: center; gap: 0.5em; }
+.name { font-weight: 800; font-size: 1.1em; }
+.meta { color: var(--muted); font-size: 0.85em; }
+/* One line each on a doctor card, so every card is the same height and the real clinics below stay in view. */
+.card .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .card-top { min-width: 0; }
+.card .name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.card .num { flex-shrink: 0; }
+.card .actions { margin-top: 0.25em; }
+.links { display: flex; gap: 1.1em; flex-wrap: wrap; }
+.row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5em; font-variant-numeric: tabular-nums; }
+.fee { font-weight: 800; font-size: 1.25em; }
+.when { color: var(--accent); font-weight: 800; }
+.times { display: flex; flex-wrap: wrap; gap: 0.4em; }
+.time { border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 999px; padding: 0.35em 0.8em; font-variant-numeric: tabular-nums; cursor: pointer; font-size: 0.85em; }
+.time:hover, .time.best { border-color: var(--accent); color: var(--accent); }
+.actions { display: flex; gap: 0.5em; flex-wrap: wrap; margin-top: auto; }
+.btn { border: 0; border-radius: 999px; padding: 0.55em 1.2em; font-weight: 800; cursor: pointer; background: var(--surface-2); color: var(--fg); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.big { font-size: 1.1em; padding: 0.7em 1.6em; }
+
+/* A map beside the content: H = home, numbered pins = the clinics. */
+.split { display: grid; grid-template-columns: minmax(0, 36%) minmax(0, 1fr); gap: 1.2vw; align-items: stretch; flex-shrink: 0; }
+.split.no-map { grid-template-columns: minmax(0, 1fr); }
+.map { position: relative; min-height: 9em; padding: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); color: var(--muted); display: grid; place-items: center; cursor: default; }
+.map[data-open] { cursor: pointer; }
+.map img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.map-wait { display: flex; align-items: center; gap: 0.5em; font-size: 0.85em; }
+.map-tag { position: absolute; left: 0.5em; bottom: 0.5em; background: rgba(8, 16, 20, 0.82); color: #eef6f8; border-radius: 999px; padding: 0.2em 0.7em; font-size: 0.7em; font-weight: 700; }
+.place .num { display: inline-grid; vertical-align: middle; width: 1.5em; height: 1.5em; font-size: 0.8em; }
+
+/* Real clinics from Google Maps (call to book) */
+.nearby { border-top: 1px solid var(--line); padding-top: 0.8em; display: flex; flex-direction: column; gap: 0.45em; flex-shrink: 0; }
+.head, .focus, .list, .ok { flex-shrink: 0; }
+.link-btn { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0.3em 0.2em; font-size: 0.85em; }
+.nearby-title { font-size: 0.8em; color: var(--muted); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; margin: 0; }
+.nearby-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(14em, 1fr)); gap: 0.6em; }
+.place { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 0.6em 0.8em; font-size: 0.8em; display: flex; flex-direction: column; gap: 0.25em; min-width: 0; }
+.place b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.1em; }
+.place-actions { display: flex; align-items: center; gap: 0.8em; flex-wrap: wrap; margin-top: 0.2em; }
+.btn.call { font-size: 0.95em; padding: 0.4em 0.9em; font-variant-numeric: tabular-nums; background: var(--good-bg); color: var(--good); }
+.open { color: var(--good); font-weight: 700; }
+.addr { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip.real { color: var(--good); }
+.phone { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
+.link { background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; font-size: 0.95em; text-align: left; }
+.attribution { font-size: 0.7em; color: var(--muted); margin: 0; }
+
+/* One focused item (confirm / booked / usual) */
+.focus { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.3em 1.5em; display: flex; flex-direction: column; gap: 0.9em; }
+.facts { display: grid; grid-template-columns: auto 1fr; gap: 0.35em 1.2em; margin: 0; font-variant-numeric: tabular-nums; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-weight: 700; }
+.note { background: var(--surface-2); border-radius: 12px; padding: 0.7em 0.9em; font-size: 0.9em; }
+.note b { color: var(--gold); }
+.big-time { font-size: 2.2em; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; margin: 0; }
+.ok { display: flex; align-items: center; gap: 0.5em; color: var(--good); font-weight: 800; font-size: 1.4em; }
+.ok-dot { width: 1.3em; height: 1.3em; border-radius: 50%; background: var(--good); color: var(--good-bg); display: grid; place-items: center; font-size: 0.8em; }
+.sms { border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: 10px; padding: 0.6em 0.8em; font-size: 0.85em; }
+.sms b { display: block; color: var(--muted); font-size: 0.85em; margin-bottom: 0.2em; }
+
+/* What the clinic said about a booking */
+.status { display: inline-block; margin-top: 0.3em; font-size: 0.75em; font-weight: 800; border-radius: 999px; padding: 0.15em 0.7em; background: var(--surface-2); color: var(--gold); }
+.status.accepted { color: var(--good); background: var(--good-bg); }
+.status.rejected { color: var(--danger); background: var(--danger-bg); }
+
+/* Lists */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6em; }
+.list li { background: var(--surface); border-radius: 14px; padding: 0.8em 1em; display: flex; justify-content: space-between; align-items: center; gap: 1em; flex-wrap: wrap; }
+
+/* Emergency: a full, unmissable screen */
+.emergency { margin: auto; text-align: center; background: var(--danger-bg); border: 3px solid var(--danger); border-radius: var(--radius); padding: 1.6em 2em; display: flex; flex-direction: column; gap: 0.5em; max-width: 34em; }
+.emergency .call { font-size: 3.2em; font-weight: 900; color: var(--danger); margin: 0; letter-spacing: -0.02em; }
+/* With the nearest hospitals listed below, the "Call 112" box sits at the top instead of the middle. */
+.emergency.with-list { margin: 0 auto; padding: 1em 1.6em; flex-shrink: 0; }
+.emergency.with-list .call { font-size: 2.6em; }
+.nearby-list.wide { flex-shrink: 0; }
+.emergency p { margin: 0; }
+
+.message { margin: auto; max-width: 32em; text-align: center; font-size: 1.15em; }
+/* A question with a tap answer for each family member */
+.question { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 1em; flex-shrink: 0; }
+.question .message { margin: 0; }
+.choices { justify-content: center; }
+
+/* ---------- Responsive: the same screen on Echo Show, phones (portrait/landscape) and tablets ---------- */
+
+/* Touch screens: finger-sized targets. */
+@media (pointer: coarse) {
+  .time { min-height: 40px; padding: 0.45em 0.9em; }
+  .btn { min-height: 44px; }
+  .link, .link-btn { min-height: 40px; }
+}
+
+/* Narrow (phone portrait): one card at a time with the next one peeking in; details stacked. */
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  .screen { padding: 14px 12px; gap: 12px; }
+  .title { font-size: 1.3em; }
+  .head { gap: 0.4em; }
+  .cards { grid-auto-columns: minmax(80%, 1fr); gap: 10px; }
+  /* Phone: the map sits on top as a banner. */
+  .split { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .map { min-height: 0; aspect-ratio: 16 / 8; }
+  .focus { padding: 0.9em 1em; gap: 0.7em; }
+  .facts { gap: 0.3em 0.9em; font-size: 0.95em; }
+  .note { padding: 0.55em 0.75em; font-size: 0.85em; }
+  .big-time { font-size: 1.8em; }
+  .actions .btn.big { flex: 1 1 auto; text-align: center; }
+  .emergency { padding: 1.2em 1em; }
+  .emergency .call { font-size: 2.6em; }
+  .nearby-list { grid-template-columns: 1fr; }
+  .list li { flex-direction: column; align-items: flex-start; gap: 0.5em; }
+  .ok { font-size: 1.25em; }
+}
+
+/* Very small phones (320–360px): stack labels above values. */
+@media (max-width: 340px) {
+  body { font-size: 14px; }
+  .screen { padding: 12px 10px; }
+  .cards { grid-auto-columns: minmax(86%, 1fr); }
+  .facts { grid-template-columns: 1fr; gap: 0; }
+  .facts dt { margin-top: 0.45em; font-size: 0.85em; }
+  .emergency .call { font-size: 2.2em; }
+}
+
+/* Short screens (phone landscape): tighter vertical spacing. */
+@media (max-height: 380px) {
+  .screen { padding: 10px 14px; gap: 10px; }
+  .title { font-size: 1.2em; }
+  .big-time { font-size: 1.6em; }
+  .focus { padding: 0.8em 1em; gap: 0.6em; }
+}
+.loading { margin: auto; color: var(--muted); display: flex; align-items: center; gap: 0.6em; }
+.spinner { width: 1.2em; height: 1.2em; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
