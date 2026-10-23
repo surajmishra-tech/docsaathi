@@ -2,7 +2,7 @@
 
 **Alexa+ launched in India on 16 September 2026 with no health partners. DocSaathi connects Alexa+ to India's doctor network.**
 
-**Demo video:** _the YouTube link is added here at submission_ · **Product feedback:** [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) ·
+**Demo video:** [youtu.be/mMd9LW-GB5U](https://youtu.be/mMd9LW-GB5U) (2 min 27 s) · **Product feedback:** [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) ·
 **Friction log:** [docs/FRICTION_LOG.md](docs/FRICTION_LOG.md) · **License:** MIT
 
 ![The DocSaathi Echo Show simulator: child doctors for Aarav, with a map, free times and fees](docs/images/03-doctors.png)
