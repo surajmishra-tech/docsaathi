@@ -5,6 +5,10 @@ The detailed problems, with steps to reproduce and suggestions, are in the [fric
 
 ## 1. Which developer tools, APIs, and SDKs did you use and for what?
 
+> **Honest status of the AWS parts:** the Bedrock brain and the Polly voice are written, documented and tested against recorded
+> AWS responses, but we did not finish setting up our AWS keys before the deadline. So the demo video runs on the Groq brain and
+> the browser's voice, and we could not try Bedrock and Polly live.
+
 | Tool, API or SDK | What DocSaathi uses it for |
 |---|---|
 | **Alexa+ MCP Toolkit documentation** (overview, quickstart, authentication, account linking, certification, local inspector) | The rules DocSaathi is built to: Streamable HTTP, protocol 2025-11-25, OAuth 2.1 account linking with PKCE, the service token, tool latency under 500 ms. The toolkit itself is invite-only, so Alexa+ is simulated in our web app, as the rules allow. |
@@ -12,7 +16,7 @@ The detailed problems, with steps to reproduce and suggestions, are in the [fric
 | **MCP Apps** (`@modelcontextprotocol/ext-apps`) | The Echo Show screen: doctor cards, free times, the confirm card, the booking, reminders and the emergency card, in a double-iframe sandbox (`AppBridge`). The map picture is an app-only tool (`visibility: ["app"]`). |
 | **Amazon Bedrock** (Claude through Anthropic's Bedrock SDK, `@anthropic-ai/bedrock-sdk`) | The AI brain that understands Hindi, English and Hinglish and chooses DocSaathi's MCP tools, with Claude Haiku 5.5 and Haiku 4.5 as its backup. Our own safety rules stay outside the model. |
 | **Amazon Polly** (`@aws-sdk/client-polly`, voice **Kajal**, neural) | Alexa's voice in the simulator: Kajal speaks both Hindi and Indian English. Answers are cached, with a daily character limit. |
-| **AWS account, IAM and Billing** | An IAM user with a policy for Bedrock and Polly only, a zero-spend budget, and the hackathon credit. |
+| **AWS account, IAM and Billing** | A new AWS account in India, the hackathon credit, and the setup guide for an IAM user limited to Bedrock and Polly ([AWS_SETUP.md](AWS_SETUP.md)). |
 | **Groq API** (OpenAI-compatible chat with tool calling) | A second AI brain for development and a fallback when Bedrock cannot answer. |
 | **Google Maps Platform** (Geocoding, Places Text Search, Distance Matrix, Static Maps, Directions; legacy web services) | Real clinics, hospitals, chemists, labs and Jan Aushadhi shops near the family; live travel times and the "leave by" time; map pictures. |
 | **Chrome Web Speech API** (SpeechRecognition `hi-IN` and `en-IN`, speechSynthesis) | Listening in the simulator, hands-free mode, "roko" to interrupt, and the voice when Polly is off. |
@@ -26,8 +30,8 @@ The detailed problems, with steps to reproduce and suggestions, are in the [fric
 - **MCP Apps.** Following the `basic-host` example, the double-iframe sandbox worked on the first try. App-only tools (`visibility: ["app"]`) are a clean way to let a screen fetch a map picture without the AI ever seeing the tool.
 - **The Alexa+ add-on guidance for screens** (readable across the room, everything on the commit screen, confirm before acting) gave clear design rules, and our screens follow them.
 - **Tool calling with structured results.** Returning `structuredContent` next to a short spoken line let the same tool result drive Alexa's voice, the screen and our own safety checks.
-- **Amazon Polly's Kajal voice** is exactly what an Indian family needs: one voice for Hindi and for Indian English.
-- **IAM policies scoped to two services** and the **zero-spend budget template** made it possible to give an app AWS access without fear of a large bill.
+- **Amazon Polly's Kajal voice** fits Indian families on paper: one voice for Hindi and for Indian English.
+- **IAM policies can be scoped to two services**, and the zero-spend budget template, so an app can get AWS access without fear of a large bill.
 - **Google's legacy web services** (Geocoding, Places Text Search, Distance Matrix) gave good data for Indian addresses and areas.
 
 ## 3. What needs work?
