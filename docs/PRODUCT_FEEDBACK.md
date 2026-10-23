@@ -5,16 +5,17 @@ The detailed problems, with steps to reproduce and suggestions, are in the [fric
 
 ## 1. Which developer tools, APIs, and SDKs did you use and for what?
 
-> **Honest status of the AWS parts:** the Bedrock brain and the Polly voice are written, documented and tested against recorded
-> AWS responses, but we did not finish setting up our AWS keys before the deadline. So the demo video runs on the Groq brain and
-> the browser's voice, and we could not try Bedrock and Polly live.
+> **Status of the AWS parts (23 Oct, before the deadline):** both are live on our account. Amazon Bedrock is the brain: Claude
+> returned "not available for this account", so DocSaathi uses `openai.gpt-oss-120b` through Bedrock's OpenAI-compatible endpoint,
+> signed with the same IAM key. Amazon Polly's Kajal voice speaks Hindi and English. The demo video was recorded earlier, with the
+> Groq brain and the browser voice.
 
 | Tool, API or SDK | What DocSaathi uses it for |
 |---|---|
 | **Alexa+ MCP Toolkit documentation** (overview, quickstart, authentication, account linking, certification, local inspector) | The rules DocSaathi is built to: Streamable HTTP, protocol 2025-11-25, OAuth 2.1 account linking with PKCE, the service token, tool latency under 500 ms. The toolkit itself is invite-only, so Alexa+ is simulated in our web app, as the rules allow. |
 | **MCP TypeScript SDK v2** (`@modelcontextprotocol/server`, `client`, `express`, `node`) | The DocSaathi MCP server (15 tools). One endpoint serves spec 2025-11-25 (what Alexa+ speaks) and 2026-07-28 through the SDK's era routing. Bearer-token checks (`verifyBearerToken`), RFC 9728 metadata, DNS-rebinding guards. The simulator's "Alexa" is an MCP client over Streamable HTTP. |
 | **MCP Apps** (`@modelcontextprotocol/ext-apps`) | The Echo Show screen: doctor cards, free times, the confirm card, the booking, reminders and the emergency card, in a double-iframe sandbox (`AppBridge`). The map picture is an app-only tool (`visibility: ["app"]`). |
-| **Amazon Bedrock** (Claude through Anthropic's Bedrock SDK, `@anthropic-ai/bedrock-sdk`) | The AI brain that understands Hindi, English and Hinglish and chooses DocSaathi's MCP tools, with Claude Haiku 5.5 and Haiku 4.5 as its backup. Our own safety rules stay outside the model. |
+| **Amazon Bedrock** (Claude through Anthropic's Bedrock SDK; `openai.gpt-oss-120b` through Bedrock's OpenAI-compatible endpoint, SigV4-signed) | The AI brain that understands Hindi, English and Hinglish and chooses DocSaathi's MCP tools, with Claude Haiku 5.5 and Haiku 4.5 as its backup. Our own safety rules stay outside the model. |
 | **Amazon Polly** (`@aws-sdk/client-polly`, voice **Kajal**, neural) | Alexa's voice in the simulator: Kajal speaks both Hindi and Indian English. Answers are cached, with a daily character limit. |
 | **AWS account, IAM and Billing** | A new AWS account in India, the hackathon credit, and the setup guide for an IAM user limited to Bedrock and Polly ([AWS_SETUP.md](AWS_SETUP.md)). |
 | **Groq API** (OpenAI-compatible chat with tool calling) | A second AI brain for development and a fallback when Bedrock cannot answer. |
@@ -35,6 +36,12 @@ The detailed problems, with steps to reproduce and suggestions, are in the [fric
 - **Google's legacy web services** (Geocoding, Places Text Search, Distance Matrix) gave good data for Indian addresses and areas.
 
 ## 3. What needs work?
+
+- **Bedrock model access is a guessing game.** On our new account, Claude Haiku 4.5 returned *"not available for this account"* with
+  no reason and no link, and Claude Haiku 5.5 *"does not exist"* under the documented ID. Open-weight `openai.gpt-oss-120b` worked at
+  once through the OpenAI-compatible endpoint. A clear page that says which models an account can use, and why not, would save hours.
+- **Kajal, Polly's Indian voice, is not offered in Mumbai (ap-south-1),** and `DescribeVoices` with `LanguageCode=hi-IN` hides her
+  unless `IncludeAdditionalLanguageCodes` is set, because her first language is Indian English. Both cost us time on deadline night.
 
 - **Alexa+ authentication docs contradict each other** in four places (only authorization code vs a client-credentials service tier; refresh tokens always vs never; a 401 with or without `WWW-Authenticate`; client authentication method). We supported every reading. Details: friction log entry 8.
 - **No public Alexa+ test path.** The MCP Toolkit, the CLI and the Local Inspector need preview access, and the account-linking redirect URIs are only in the Developer Hub. A public sandbox, or even a published redirect URI pattern, would let every entrant test against the real thing. (Friction log entry 5.)

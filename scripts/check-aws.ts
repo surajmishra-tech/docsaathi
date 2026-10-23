@@ -7,7 +7,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { DescribeVoicesCommand, SynthesizeSpeechCommand, type Engine, type VoiceId } from '@aws-sdk/client-polly';
 import { config } from '../src/server/config.js';
 import { askModel, modelName } from '../src/server/brain/claude.js';
-import type { LlmTool } from '../src/server/brain/llm.js';
+import { bedrockSend } from '../src/server/brain/bedrock-openai.js';
+import { chatWith, type LlmTool } from '../src/server/brain/llm.js';
 import { pollyClient } from '../src/server/voice.js';
 
 const good = (text: string) => console.log(`  ✅ ${text}`);
@@ -36,7 +37,7 @@ else if (bedrockApiKey) {
 }
 
 // 2. Bedrock ---------------------------------------------------------------------------------------
-console.log('\n2. Claude on Amazon Bedrock (the brain)');
+console.log('\n2. Amazon Bedrock (the brain)');
 const findDoctors: LlmTool = {
   name: 'find_doctors',
   description: 'Find doctors with free times for a problem or a kind of doctor.',
@@ -80,6 +81,27 @@ for (const model of config.bedrock.models) {
     }
   }
 }
+// Open-weight models on Bedrock's OpenAI-compatible endpoint (the brain when Claude is not open to the account)
+for (const model of config.bedrock.openaiModels) {
+  const started = Date.now();
+  try {
+    const answer = await chatWith(
+      { models: [model], send: (body) => bedrockSend(body) },
+      [
+        { role: 'system', content: 'You are Alexa helping an Indian family book doctors. When they need a doctor, call find_doctors.' },
+        { role: 'user', content: 'Papa ke daant mein bahut dard hai, dentist dhoondo' },
+      ],
+      [findDoctors],
+    );
+    const call = answer.toolCalls[0];
+    const ms = Date.now() - started;
+    if (call?.name === 'find_doctors') good(`${model} on Bedrock: works (${ms} ms). It called find_doctors(${JSON.stringify(call.arguments)})`);
+    else good(`${model} on Bedrock: answers (${ms} ms), but did not call the tool this time: "${answer.text.slice(0, 90)}"`);
+    brainOk = true;
+  } catch (err) {
+    bad(`${model} on Bedrock: ${err instanceof Error ? err.message.slice(0, 220) : String(err)}`);
+  }
+}
 if (brainOk) tip('At least one model works, so BRAIN=bedrock is ready. (Models that failed are skipped automatically.)');
 
 // 3. Polly -----------------------------------------------------------------------------------------
@@ -89,7 +111,8 @@ if (!iam) {
 } else {
   const polly = pollyClient();
   try {
-    const { Voices = [] } = await polly.send(new DescribeVoicesCommand({ LanguageCode: 'hi-IN' }));
+    // Kajal's first language is Indian English and Hindi is her second, so ask for bilingual voices too.
+    const { Voices = [] } = await polly.send(new DescribeVoicesCommand({ LanguageCode: 'hi-IN', IncludeAdditionalLanguageCodes: true }));
     const kajal = Voices.find((v) => v.Id === config.voice.pollyVoice);
     if (!kajal) {
       bad(`The voice "${config.voice.pollyVoice}" is not offered in ${config.voice.pollyRegion}. Hindi voices there: ${Voices.map((v) => v.Id).join(', ') || 'none'}.`);

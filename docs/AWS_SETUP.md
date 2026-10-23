@@ -13,7 +13,9 @@ by itself: Claude Haiku 5.5 → Claude Haiku 4.5 → Groq → the built-in rules
 > **Keys are secret.** Put them only in the `.env` file. Never paste them in a chat, an email, a screenshot,
 > the video or GitHub. `.env` is in `.gitignore`, so git never uploads it.
 
-`.env` already has `BRAIN=bedrock`, `VOICE=polly` and `AWS_REGION=ap-south-1` (Mumbai), so you only paste two keys.
+`.env` needs `BRAIN=bedrock`, `VOICE=polly` and `AWS_REGION=us-east-1`: Mumbai (ap-south-1) offers neither Claude nor the Kajal voice.
+If AWS says Claude is "not available for this account", set `BEDROCK_MODELS=off`: the brain is then `openai.gpt-oss-120b` on Bedrock
+(the same key and permission).
 (Copying from `.env.example`? Set those three lines yourself.)
 
 ---
@@ -22,7 +24,7 @@ by itself: Claude Haiku 5.5 → Claude Haiku 4.5 → Groq → the built-in rules
 
 1. Open <https://console.aws.amazon.com> and sign in with your AWS email (the root user).
    If the page hangs, connect the PC to your phone's hotspot and try again.
-2. At the top right, pick the region **Asia Pacific (Mumbai) ap-south-1**.
+2. At the top right, pick the region **US East (N. Virginia) us-east-1**.
 
 ## Step 2. A spending alert (2 minutes)
 

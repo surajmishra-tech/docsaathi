@@ -24,11 +24,11 @@ Built for the **Build, Ship, Shape: Amazon Developer Hackathon (Alexa+ track)** 
 
 | Criterion | What DocSaathi does | Where to look |
 |---|---|---|
-| **Technical implementation** | A self-hosted MCP server (Streamable HTTP; spec 2025-11-25, which Alexa+ speaks, and 2026-07-28 on the same endpoint) with 15 tools and an MCP Apps screen for Echo Show. OAuth 2.1 account linking built to Amazon's Alexa+ auth rules. India's UHI booking protocol with signed messages. Claude on Amazon Bedrock as the brain, Amazon Polly as the voice. 80 unit tests plus end-to-end and browser checks. | [mcp.ts](src/server/mcp.ts), [oauth.ts](src/server/oauth.ts), [uhi/](src/server/uhi), [claude.ts](src/server/brain/claude.ts), [voice.ts](src/server/voice.ts) |
+| **Technical implementation** | A self-hosted MCP server (Streamable HTTP; spec 2025-11-25, which Alexa+ speaks, and 2026-07-28 on the same endpoint) with 15 tools and an MCP Apps screen for Echo Show. OAuth 2.1 account linking built to Amazon's Alexa+ auth rules. India's UHI booking protocol with signed messages. Amazon Bedrock as the brain (gpt-oss-120b; Claude built in) and Amazon Polly as the voice. 80 unit tests plus end-to-end and browser checks. | [mcp.ts](src/server/mcp.ts), [oauth.ts](src/server/oauth.ts), [uhi/](src/server/uhi), [claude.ts](src/server/brain/claude.ts), [voice.ts](src/server/voice.ts) |
 | **Design** | Voice first, screen second: cards readable across the room, a confirm card before every booking, answers in Hindi or English, a hands-free mic you can interrupt ("roko"), a ☰ menu for everything, and a phone layout. | [src/views](src/views), [src/web](src/web) |
 | **Potential impact** | Alexa+ came to India with no health partner. Indian homes are often three generations, and many elders cannot use booking apps. DocSaathi books for the whole family in their own words, sends emergencies to 112 / 108 / 14416 instead of booking, keeps a family health record to show the next doctor, and finds cheaper Jan Aushadhi medicine shops. | [Safety](#safety-and-privacy) |
 | **Quality of the idea** | It connects Alexa+ to India's open UHI network, not to one company's clinics, so any clinic on UHI can be booked. It remembers each person's usual doctor and follow-ups, asks who is talking instead of guessing, and the clinic desk answers back. Accuracy is measured on 103 family sentences. | [Accuracy](#accuracy) |
-| **Friction log and feedback** | 10 detailed entries, and answers to the five feedback questions. | [FRICTION_LOG.md](docs/FRICTION_LOG.md), [PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) |
+| **Friction log and feedback** | 11 detailed entries, and answers to the five feedback questions. | [FRICTION_LOG.md](docs/FRICTION_LOG.md), [PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) |
 
 ---
 
@@ -107,9 +107,12 @@ Two pages keep the **family's health record**, so nobody has to remember it at t
 Without any key, the simulator's "Alexa" is a rule-based brain (`BRAIN=demo`): it understands the demo story and many everyday
 variations. With an AI model, a language model does the understanding and picks the MCP tools, the way Alexa+ would:
 
-- **Claude on Amazon Bedrock** (`BRAIN=bedrock`, an AWS key in `.env`): Claude Haiku 5.5, with Claude Haiku 4.5 as its backup,
-  through Anthropic's official Bedrock SDK ([src/server/brain/claude.ts](src/server/brain/claude.ts)). Setup in about 20 minutes:
-  [docs/AWS_SETUP.md](docs/AWS_SETUP.md), then `npm run check:aws` tests the keys in plain words.
+- **Amazon Bedrock** (`BRAIN=bedrock`, an AWS key in `.env`). First **Claude** (Haiku 5.5, then Haiku 4.5) through Anthropic's
+  official Bedrock SDK ([claude.ts](src/server/brain/claude.ts)); then **`openai.gpt-oss-120b`** through Bedrock's OpenAI-compatible
+  endpoint, signed with the same IAM key ([bedrock-openai.ts](src/server/brain/bedrock-openai.ts)). On our own AWS account Amazon says
+  Anthropic's models are "not available for this account", so DocSaathi's live brain is **gpt-oss-120b on Amazon Bedrock**
+  (`BEDROCK_MODELS=off` skips Claude). Setup in about 20 minutes: [docs/AWS_SETUP.md](docs/AWS_SETUP.md), then `npm run check:aws`
+  tests the keys in plain words.
 - **Groq** (`BRAIN=groq`, a free key from [console.groq.com](https://console.groq.com)): `openai/gpt-oss-120b`. With `BRAIN=bedrock`,
   Groq also answers when Bedrock cannot (no access yet, network, daily limit).
 
@@ -258,8 +261,9 @@ npm run check:aws   # with AWS keys: tests Claude on Bedrock and the Polly voice
 
 ## Hackathon notes
 
-- Track: **Alexa+**. Mini challenge: **AWS Builder**: Claude on Amazon Bedrock is the brain and Amazon Polly is the voice
-  ([setup](docs/AWS_SETUP.md)).
+- Track: **Alexa+**. Mini challenge: **AWS Builder**: Amazon Bedrock is the brain (gpt-oss-120b live; Claude built in) and Amazon
+  Polly (Kajal) is the voice, both tested live on our account ([setup](docs/AWS_SETUP.md)). The demo video was recorded earlier, with
+  Groq and the browser voice.
 - The problems we hit are in [docs/FRICTION_LOG.md](docs/FRICTION_LOG.md); feedback on every tool in
   [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md).
 - Alexa+ is simulated in our web page (the Alexa+ developer tools are invite-only), as the rules allow. The MCP server is the real thing.

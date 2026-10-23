@@ -1,6 +1,7 @@
 // A small client for AI models that speak the OpenAI "chat completions" format with tools.
-// Groq uses this format. Models are tried in order: when one is busy (rate limit) or fails,
-// the next one answers. If none can, LlmUnavailable is thrown and the rule-based brain takes over.
+// Groq and Amazon Bedrock's OpenAI-compatible endpoint (bedrock-openai.ts) use this format. Models are
+// tried in order: when one is busy (rate limit) or fails, the next one answers. If none can,
+// LlmUnavailable is thrown and the rule-based brain takes over.
 import { config } from '../config.js';
 
 export interface LlmTool {
@@ -45,33 +46,56 @@ export function llmReady(): boolean {
   return Boolean(config.groq.apiKey) && config.groq.models.length > 0;
 }
 
+/** Where a chat request goes: the models to try, and how one request body is sent. */
+export interface Provider {
+  models: string[];
+  send(body: string): Promise<Response>;
+}
+
+const groq: Provider = {
+  get models() {
+    return config.groq.models;
+  },
+  send: (body) =>
+    fetch(`${config.groq.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${config.groq.apiKey}`, 'Content-Type': 'application/json' },
+      body,
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    }),
+};
+
 const SHORT_WAIT_MS = 3500; // a pause this short is fine in a voice conversation
 
 export async function chat(messages: LlmMessage[], tools: LlmTool[]): Promise<LlmAnswer> {
   if (!llmReady()) throw new LlmUnavailable('No AI key configured');
+  return chatWith(groq, messages, tools);
+}
+
+export async function chatWith(provider: Provider, messages: LlmMessage[], tools: LlmTool[]): Promise<LlmAnswer> {
   let problems: string[] = [];
   for (let round = 0; round < 2; round++) {
     problems = [];
-    for (const model of config.groq.models) {
+    for (const model of provider.models) {
       if ((restingUntil.get(model) ?? 0) > Date.now()) {
         problems.push(`${model}: resting after a rate limit`);
         continue;
       }
       try {
-        return await ask(model, messages, tools);
+        return await ask(provider, model, messages, tools);
       } catch (err) {
         problems.push(`${model}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
     // Every model is resting. If one is free again in a moment, wait for it once.
-    const soonest = Math.min(...config.groq.models.map((m) => restingUntil.get(m) ?? Infinity)) - Date.now();
+    const soonest = Math.min(...provider.models.map((m) => restingUntil.get(m) ?? Infinity)) - Date.now();
     if (round > 0 || !(soonest > 0 && soonest <= SHORT_WAIT_MS)) break;
     await new Promise((r) => setTimeout(r, soonest + 100));
   }
   throw new LlmUnavailable(problems.join(' | '));
 }
 
-async function ask(model: string, messages: LlmMessage[], tools: LlmTool[]): Promise<LlmAnswer> {
+async function ask(provider: Provider, model: string, messages: LlmMessage[], tools: LlmTool[]): Promise<LlmAnswer> {
   const body: Record<string, unknown> = {
     model,
     messages: messages.map((m) => (m.role === 'assistant' && m.native ? { role: m.role, content: m.content, ...(m.tool_calls ? { tool_calls: m.tool_calls } : {}) } : m)),
@@ -83,12 +107,7 @@ async function ask(model: string, messages: LlmMessage[], tools: LlmTool[]): Pro
   // The gpt-oss models think before answering; "low" keeps a voice reply quick.
   if (model.includes('gpt-oss')) body.reasoning_effort = 'low';
 
-  const res = await fetch(`${config.groq.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${config.groq.apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
+  const res = await provider.send(JSON.stringify(body));
   if (res.status === 429) {
     const seconds = Math.min(Math.max(Number(res.headers.get('retry-after')) || 20, 2), 600);
     restingUntil.set(model, Date.now() + seconds * 1000);

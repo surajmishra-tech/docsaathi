@@ -103,3 +103,16 @@ Severity: **High** = blocked or likely to ship a bug · **Medium** = cost real t
 - **Severity:** Low.
 - **Workaround:** `requestHandler: new NodeHttpHandler({ connectionTimeout: 4000, requestTimeout: 10_000 })` from `@smithy/node-http-handler`. After a failure, the voice also rests for 5 minutes, so the browser voice answers at once instead of waiting for Polly to time out again.
 - **Suggestion:** State the HTTP/2 default in the Polly client README, or use HTTP/1.1 for the commands that do not stream.
+
+## 11. Claude "not available for this account", and Kajal missing in Mumbai
+- **Task:** Turn on the Bedrock brain and the Polly voice on deadline night, with a new AWS account in India.
+- **Steps:** Created an IAM user with `bedrock-mantle:CreateInference` and Polly permissions, region `ap-south-1` (Mumbai), then ran `npm run check:aws`.
+- **Expected:** Claude Haiku answers; Kajal (Polly's Indian voice) speaks Hindi in India's own region.
+- **Actual:** In Mumbai, neither Claude nor Kajal is offered. In `us-east-1`, Claude Haiku 4.5 returns 403 *"anthropic.claude-haiku-4-5 is not available for this account"*
+  with no reason, and Claude Haiku 5.5 returns 404 *"does not exist"*. `DescribeVoices` with `LanguageCode=hi-IN` returned no voices, because Kajal's first
+  language is `en-IN`; she appears only with `IncludeAdditionalLanguageCodes=true`, and she does speak Hindi when asked.
+- **Severity:** High on deadline night: the brain we built for could not be used.
+- **Workaround:** `openai.gpt-oss-120b` on the same account, through Bedrock's OpenAI-compatible endpoint (`bedrock-mantle.us-east-1.api.aws/v1/chat/completions`),
+  SigV4-signed with the same IAM key and permission. It worked at once (about 1.3 s with tool calling). Polly moved to `us-east-1`; the check now asks for bilingual voices.
+- **Suggestion:** Explain *why* a model is "not available for this account" (plan, country, Marketplace) and link to the fix; offer Kajal in ap-south-1;
+  and include bilingual voices in `DescribeVoices` by default, or say so in the error-free empty result.

@@ -82,10 +82,17 @@ export const config = {
   // BRAIN=bedrock: Claude on Amazon Bedrock. Models are tried in this order; when one cannot answer
   // (no access yet, busy, an error) the next one does, then Groq (if it has a key), then the rules.
   bedrock: {
+    // BEDROCK_MODELS=off: no Claude (some accounts get "not available for this account").
     models: (process.env.BEDROCK_MODELS?.trim() || process.env.BEDROCK_MODEL_ID?.trim() || 'anthropic.claude-haiku-5-5,anthropic.claude-haiku-4-5')
       .split(',')
       .map((m) => m.trim())
-      .filter(Boolean),
+      .filter((m) => m && m !== 'off'),
+    // Open-weight models on Bedrock's OpenAI-compatible endpoint (bedrock-openai.ts), tried after Claude.
+    // The IAM key's bedrock-mantle:CreateInference permission covers them too. BEDROCK_OPENAI_MODELS=off turns them off.
+    openaiModels: (process.env.BEDROCK_OPENAI_MODELS?.trim() || 'openai.gpt-oss-120b')
+      .split(',')
+      .map((m) => m.trim())
+      .filter((m) => m && m !== 'off'),
     // How hard the model thinks: low = quickest replies, right for a voice assistant.
     effort: (process.env.BEDROCK_EFFORT?.trim() || 'low') as 'low' | 'medium' | 'high',
     // off = no thinking step (fastest). adaptive = the model decides when to think (slower, sometimes smarter).
