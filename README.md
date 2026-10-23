@@ -215,11 +215,12 @@ kind of doctor, the right person, emergencies sent to 112, nothing booked withou
 |---|---|---|
 | Built-in rules (no key, offline) | **98 / 103 (95%)** | Main set 70 / 70. New sentences 28 / 33: every emergency is caught |
 | AI brain (Groq `gpt-oss-120b`) with the rules as safety net | **33 / 33** on the new sentences | Its first run scored 20 / 33: it asked questions it did not need ("When would you like the appointment?"). Its instructions were fixed. Only the new sentences were run, to save the free plan's daily limit |
+| AI brain on **Amazon Bedrock** (`openai.gpt-oss-120b`) with the rules as safety net | **29 / 33** on the new sentences | Every emergency, booking step and "who is it for" was right; 4 symptom sentences got a question instead of a search. Run on 23 Oct |
 
 The first runs found real bugs, which are now fixed. Emergencies were missed, such as "सीने में तेज़ दर्द" (sharp chest pain), a stroke
 and "daura pad raha hai" (a fit). A time-word bug changed "कल" (tomorrow) inside the Hindi word "तकलीफ" (trouble). The second set of
 sentences was written after those fixes, so it is the fair score for new words. The full reports, sentence by sentence, are in
-[docs/eval-demo.md](docs/eval-demo.md) (rules) and [docs/eval-groq.md](docs/eval-groq.md) (AI brain). With an AI brain the reply
+[docs/eval-demo.md](docs/eval-demo.md) (rules), [docs/eval-groq.md](docs/eval-groq.md) (Groq) and [docs/eval-bedrock.md](docs/eval-bedrock.md) (Amazon Bedrock). With an AI brain the reply
 takes about 0.65 seconds (median, model included); with the rules about 0.4 seconds.
 
 ## Real data vs test data
