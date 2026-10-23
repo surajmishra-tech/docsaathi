@@ -406,7 +406,16 @@ export function doctorTimes(householdId: string, input: { doctor: string; when?:
     const offer = await resolveOffer(householdById(householdId)!, input.doctor);
     if (!offer) throw new Stop(say('question', `I couldn't find ${input.doctor} on the network. Say the number from the list, or ask me to find doctors.`));
     const window = parseWhen(input.when);
-    const fresh = await refreshOffer(offer, window.from, window.to);
+    let fresh = await refreshOffer(offer, window.from, window.to);
+    let widened = false;
+    if (!fresh || fresh.slots.length === 0) {
+      // Nothing in that window (for example "this evening", asked late at night): the next 3 days, as find_doctors does.
+      const later = await refreshOffer(offer, clock.now(), addDays(startOfIstDay(clock.now()), 4));
+      if (later && later.slots.length > 0) {
+        fresh = later;
+        widened = true;
+      }
+    }
     if (!fresh || fresh.slots.length === 0) {
       return say('times', `${offer.doctor.name} has no free time ${window.label}. Should I look at another day?`, { doctor: doctorCard(offer, 1), times: [] });
     }
@@ -418,7 +427,7 @@ export function doctorTimes(householdId: string, input: { doctor: string; when?:
       byDay.set(d, [...(byDay.get(d) ?? []), formatTime(new Date(s.start))]);
     }
     const spoken = [...byDay.entries()].slice(0, 2).map(([d, times]) => `${d} at ${times.slice(0, 4).join(', ')}`).join('; ');
-    return say('times', `${fresh.doctor.name} is free ${spoken}. Which time should I book?`, {
+    return say('times', `${widened ? `Nothing free ${window.label}. ` : ''}${fresh.doctor.name} is free ${spoken}. Which time should I book?`, {
       doctor: doctorCard(fresh, 1),
       times: fresh.slots.slice(0, 24).map((s) => ({ start: s.start, label: formatTime(new Date(s.start)), day: relativeDay(new Date(s.start)) })),
     });
