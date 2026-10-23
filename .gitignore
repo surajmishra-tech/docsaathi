@@ -20,3 +20,6 @@ Thumbs.db
 
 # UI check screenshots
 screenshots/
+
+# The private submission guide (texts to paste into Devpost, the video script)
+SUBMISSION.md

@@ -2,6 +2,11 @@
 
 **Alexa+ launched in India on 16 September 2026 with no health partners. DocSaathi connects Alexa+ to India's doctor network.**
 
+**Demo video:** _the YouTube link is added here at submission_ · **Product feedback:** [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) ·
+**Friction log:** [docs/FRICTION_LOG.md](docs/FRICTION_LOG.md) · **License:** MIT
+
+![The DocSaathi Echo Show simulator: child doctors for Aarav, with a map, free times and fees](docs/images/03-doctors.png)
+
 A family says, in Hindi, English or Hinglish:
 
 > "Alexa, Aarav ko bukhaar hai, aaj shaam paas mein bachchon ka doctor chahiye."
@@ -14,6 +19,16 @@ It gives the family a leave-by time, messages another family member, and **remem
 
 Built for the **Build, Ship, Shape: Amazon Developer Hackathon (Alexa+ track)** as a self-hosted
 **MCP server (Streamable HTTP)** with an **MCP Apps** screen.
+
+## How DocSaathi meets the judging criteria
+
+| Criterion | What DocSaathi does | Where to look |
+|---|---|---|
+| **Technical implementation** | A self-hosted MCP server (Streamable HTTP; spec 2025-11-25, which Alexa+ speaks, and 2026-07-28 on the same endpoint) with 15 tools and an MCP Apps screen for Echo Show. OAuth 2.1 account linking built to Amazon's Alexa+ auth rules. India's UHI booking protocol with signed messages. Claude on Amazon Bedrock as the brain, Amazon Polly as the voice. 80 unit tests plus end-to-end and browser checks. | [mcp.ts](src/server/mcp.ts), [oauth.ts](src/server/oauth.ts), [uhi/](src/server/uhi), [claude.ts](src/server/brain/claude.ts), [voice.ts](src/server/voice.ts) |
+| **Design** | Voice first, screen second: cards readable across the room, a confirm card before every booking, answers in Hindi or English, a hands-free mic you can interrupt ("roko"), a ☰ menu for everything, and a phone layout. | [src/views](src/views), [src/web](src/web) |
+| **Potential impact** | Alexa+ came to India with no health partner. Indian homes are often three generations, and many elders cannot use booking apps. DocSaathi books for the whole family in their own words, sends emergencies to 112 / 108 / 14416 instead of booking, keeps a family health record to show the next doctor, and finds cheaper Jan Aushadhi medicine shops. | [Safety](#safety-and-privacy) |
+| **Quality of the idea** | It connects Alexa+ to India's open UHI network, not to one company's clinics, so any clinic on UHI can be booked. It remembers each person's usual doctor and follow-ups, asks who is talking instead of guessing, and the clinic desk answers back. Accuracy is measured on 103 family sentences. | [Accuracy](#accuracy) |
+| **Friction log and feedback** | 10 detailed entries, and answers to the five feedback questions. | [FRICTION_LOG.md](docs/FRICTION_LOG.md), [PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md) |
 
 ---
 
@@ -71,6 +86,21 @@ What is real and what is test data (it is marked on every screen):
   **"Sabse paas ka hospital kahan hai"** (nearest hospital), chemists and labs, with phone number (tap to call), rating, open now
   and directions; live-traffic travel times and the leave-by time; and the nearest hospitals under "Call 112" in an emergency.
 - **Real, one tap after a booking:** **Directions** (Google Maps), **Add to Google Calendar**, **Share on WhatsApp**.
+
+### The ☰ menu and the family's health record
+
+The **☰** button (top right) opens everything DocSaathi can do, one tap away: the kinds of doctor, the family's appointments and
+check-ups, the nearest chemist, **Jan Aushadhi** shops (government shops with cheaper generic medicines), labs, the nearest hospital,
+and the emergency numbers (they ask before dialling). Most buttons simply say a sentence to Alexa.
+
+Two pages keep the **family's health record**, so nobody has to remember it at the next doctor:
+
+- **Doctors we visited:** every doctor each person saw, with the date. DocSaathi bookings appear by themselves; other visits can be added.
+- **Medicine records:** what each doctor wrote (the medicine as written, how to take it, for how many days), with "12 days left" or
+  "finished". It is a record of the doctor's words only: DocSaathi never suggests a medicine.
+- **Share with a doctor:** sends the list on WhatsApp. Every entry shows who added it.
+
+![Medicine records in the menu](docs/images/08-medicine-records.png)
 
 ### Optional: an AI model that understands any phrasing
 
@@ -196,6 +226,7 @@ takes about 0.65 seconds (median, model included); with the rules about 0.4 seco
 | Doctors you can book | The **test UHI network** in this repo. Every test doctor and clinic is marked **TEST**, and none of them is real. |
 | Clinics nearby ("call to book") | **Google Maps** (real), when `GOOGLE_MAPS_API_KEY` is set in `.env` |
 | Travel time / leave-by | **Google Distance Matrix** (live traffic) with a key; otherwise an offline estimate |
+| Health record (visits, medicines) | Typed by the family in the menu; DocSaathi bookings are added by themselves |
 
 Copy `.env.example` to `.env` to add a Google Maps key (Geocoding, Places, Distance Matrix) or a home address.
 
@@ -204,7 +235,8 @@ Copy `.env.example` to `.env` to add a Google Maps key (Geocoding, Places, Dista
 - **No medical advice.** Words only route to the *kind* of doctor. Emergency words return **112 / 108**, and Tele-MANAS **14416**
   for self-harm, and nothing is booked.
 - **Confirmation before booking.** `book_appointment` only holds a time; `confirm_appointment` books it after a clear yes.
-- Stores only a name, relation, age and appointment details. No diagnoses and no health records.
+- Stores names, relations, ages and appointments, and, only when the family adds them, the doctors they visited and the medicines
+  the doctors wrote. No diagnoses. It all stays in the family's own database on the DocSaathi server.
 - Localhost-only by default, with DNS-rebinding protection. The screen runs in a sandbox that cannot reach the host page.
 - Alexa reaches the family's data only through account linking (OAuth 2.1 with PKCE). See [Account linking](#account-linking-oauth-21).
 - With an AI brain, what is said and the family's first names and ages go to Amazon Bedrock (or Groq). With `VOICE=polly`, Alexa's
@@ -218,6 +250,7 @@ npm run smoke       # MCP end to end over HTTP with 2025-11-25 and 2026-07-28 cl
 npm run smoke:demo  # the Echo conversation, pages, sandbox and MCP App resource
 npm run smoke:oauth # account linking, checked the way Alexa+ uses it (47 checks)
 npm run check:ui    # opens Chrome (headless), links the account, plays the demo, checks every screen renders, takes screenshots
+npm run check:records # the menu's health record: add a medicine and a visit, filter, share, remove
 npm run eval        # accuracy: 103 family sentences (EVAL_BRAIN=groq for the AI brain)
 npm run eval:bedrock # accuracy with Claude on Amazon Bedrock (the 33 new sentences)
 npm run check:aws   # with AWS keys: tests Claude on Bedrock and the Polly voice, in plain words
@@ -227,5 +260,7 @@ npm run check:aws   # with AWS keys: tests Claude on Bedrock and the Polly voice
 
 - Track: **Alexa+**. Mini challenge: **AWS Builder**: Claude on Amazon Bedrock is the brain and Amazon Polly is the voice
   ([setup](docs/AWS_SETUP.md)).
-- The problems we hit are in [docs/FRICTION_LOG.md](docs/FRICTION_LOG.md).
+- The problems we hit are in [docs/FRICTION_LOG.md](docs/FRICTION_LOG.md); feedback on every tool in
+  [docs/PRODUCT_FEEDBACK.md](docs/PRODUCT_FEEDBACK.md).
+- Alexa+ is simulated in our web page (the Alexa+ developer tools are invite-only), as the rules allow. The MCP server is the real thing.
 - License: [MIT](LICENSE)
